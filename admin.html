@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin – Detailing Wolves</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--orange:#FF6600;--black:#080808;--card:#141414;--card2:#1c1c1c;--border:rgba(255,102,0,0.18);--white:#F0F0F0;--grey:#888}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--black);color:var(--white);font-family:'Barlow',sans-serif;min-height:100vh}
+    a{color:var(--orange);text-decoration:none}
+
+    /* LOGIN */
+    .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .login-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:40px 32px;width:100%;max-width:360px;text-align:center}
+    .brand{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:4px;color:var(--orange);margin-bottom:4px}
+    .login-sub{font-size:11px;color:var(--grey);letter-spacing:3px;text-transform:uppercase;margin-bottom:28px}
+    .login-box input{width:100%;padding:13px 16px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--white);font-size:16px;letter-spacing:6px;text-align:center;margin-bottom:12px;outline:none;transition:border-color .2s}
+    .login-box input:focus{border-color:var(--orange)}
+    .login-btn{width:100%;padding:14px;background:var(--orange);color:#000;border:none;border-radius:10px;cursor:pointer;font-family:'Barlow',sans-serif;font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;transition:opacity .2s}
+    .login-btn:hover{opacity:.88}
+    .login-err{color:#ff4444;font-size:13px;margin-top:8px;display:none}
+
+    /* PANEL */
+    .panel{display:none;max-width:760px;margin:0 auto;padding:24px 16px 80px}
+    .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+    .panel-header .brand{font-size:20px}
+    .panel-header .sub{font-size:10px;color:var(--grey);letter-spacing:2px}
+    .logout-btn{padding:8px 16px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--grey);cursor:pointer;font-size:12px;letter-spacing:1px;transition:color .2s}
+    .logout-btn:hover{color:var(--orange)}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--grey);margin-bottom:20px;transition:color .2s}
+    .back-link:hover{color:var(--orange)}
+
+    /* TABS */
+    .tabs{display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap}
+    .tab-btn{padding:9px 18px;background:var(--card2);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--grey);transition:all .2s}
+    .tab-btn.active{background:var(--orange);color:#000;border-color:var(--orange)}
+
+    /* CARDS */
+    .admin-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px}
+    .sec-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--orange);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .sec-label::before{content:'✦';font-size:8px}
+    .field-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--grey);margin-bottom:8px}
+    .hint{font-size:11px;color:#555;margin-bottom:14px;line-height:1.6}
+
+    /* UPLOAD ZONE — fixed to use label trick */
+    .upload-zone{position:relative;border:2px dashed rgba(255,102,0,.3);border-radius:12px;padding:28px 16px;text-align:center;transition:border-color .2s,background .2s;cursor:pointer}
+    .upload-zone:hover{border-color:var(--orange);background:rgba(255,102,0,.04)}
+    .upload-zone input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2}
+    .upload-zone .uz-icon{font-size:26px;margin-bottom:8px}
+    .upload-zone .uz-text{font-size:13px;color:var(--grey)}
+    .upload-zone .uz-hint{font-size:11px;color:#444;margin-top:4px}
+    .preview-wrap{margin-top:12px;display:none}
+    .preview-wrap img{width:100%;border-radius:10px;max-height:200px;object-fit:cover;border:1px solid var(--border)}
+
+    /* SAVE BTN */
+    .save-btn{width:100%;padding:13px;background:var(--orange);color:#000;border:none;border-radius:10px;cursor:pointer;font-family:'Barlow',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-top:14px;transition:opacity .2s}
+    .save-btn:hover{opacity:.88}
+    .save-btn.success{background:#25D366}
+    .del-btn{padding:6px 14px;background:rgba(255,50,50,.1);border:1px solid rgba(255,50,50,.2);border-radius:8px;color:#ff6666;cursor:pointer;font-size:12px;transition:background .2s}
+    .del-btn:hover{background:rgba(255,50,50,.2)}
+
+    /* GALLERY GRID */
+    .gallery-admin{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px}
+    @media(min-width:500px){.gallery-admin{grid-template-columns:repeat(4,1fr)}}
+    .g-slot{border-radius:12px;aspect-ratio:3/4;position:relative;background:var(--card2);border:2px dashed rgba(255,102,0,.25);overflow:hidden;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;cursor:pointer;transition:border-color .2s}
+    .g-slot:hover{border-color:var(--orange)}
+    .g-slot input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:3}
+    .g-slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+    .g-slot .g-overlay{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.8);padding:6px;z-index:2;display:flex;align-items:center;gap:4px}
+    .g-slot .g-num{font-size:9px;color:var(--grey);letter-spacing:1px;text-transform:uppercase;flex-shrink:0}
+    .g-slot input.label-inp{position:relative;flex:1;opacity:1;cursor:text;background:transparent;border:none;color:var(--white);font-size:10px;outline:none;letter-spacing:1px;min-width:0;z-index:4}
+    .g-slot .g-empty{font-size:22px;color:rgba(255,102,0,.35);z-index:1}
+    .g-slot .g-del{position:absolute;top:4px;right:4px;background:rgba(255,0,0,.7);border:none;border-radius:50%;width:22px;height:22px;color:#fff;font-size:12px;cursor:pointer;z-index:5;display:none;align-items:center;justify-content:center;line-height:1}
+    .g-slot:hover .g-del{display:flex}
+
+    /* SERVICES EDITOR */
+    .svc-list{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+    .svc-row{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start}
+    .svc-row .svc-icon-inp{width:42px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:18px;text-align:center;padding:6px 4px;outline:none;flex-shrink:0}
+    .svc-row .svc-name-inp{flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--white);font-size:14px;font-weight:600;padding:4px 0;outline:none;margin-bottom:6px;width:100%}
+    .svc-row .svc-desc-inp{width:100%;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--grey);font-size:12px;padding:4px 0;outline:none;resize:none}
+    .svc-row .svc-text{flex:1;min-width:0}
+    .svc-row input:focus,.svc-row textarea:focus{border-bottom-color:var(--orange)}
+    .add-row-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(255,102,0,.08);border:1px dashed rgba(255,102,0,.3);border-radius:10px;color:var(--orange);cursor:pointer;font-size:13px;font-weight:600;transition:background .2s}
+    .add-row-btn:hover{background:rgba(255,102,0,.14)}
+
+    /* REVIEW SERVICES EDITOR */
+    .rs-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+    .rs-row{display:flex;gap:8px;align-items:center}
+    .rs-key-inp{width:160px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--grey);font-size:11px;padding:8px 10px;outline:none;letter-spacing:1px;flex-shrink:0}
+    .rs-name-inp{flex:1;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;padding:8px 12px;outline:none}
+    .rs-key-inp:focus,.rs-name-inp:focus{border-color:var(--orange)}
+
+    /* TESTIMONIALS */
+    .testi-list{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+    .testi-row{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;gap:10px;align-items:flex-start}
+    .testi-row .t-left{display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+    .testi-row input.t-name{background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--white);font-size:13px;font-weight:600;padding:3px 0;outline:none;width:120px}
+    .testi-row input.t-name:focus{border-bottom-color:var(--orange)}
+    .t-stars{display:flex;gap:3px}
+    .t-star{font-size:16px;cursor:pointer;opacity:.3;transition:opacity .15s}
+    .t-star.on{opacity:1}
+    .testi-row textarea.t-text{flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--grey);font-size:12px;padding:3px 0;outline:none;resize:none;line-height:1.6;min-height:60px}
+    .testi-row textarea:focus{border-bottom-color:var(--orange)}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#25D366;color:#000;padding:10px 24px;border-radius:50px;font-size:13px;font-weight:700;letter-spacing:1px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap}
+    .toast.show{opacity:1}
+
+    input::placeholder,textarea::placeholder{color:#444}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="brand">DETAILING WOLVES</div>
+    <div class="login-sub">Admin Panel</div>
+    <input type="password" id="pwInput" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="login-btn" onclick="doLogin()">Login</button>
+    <div class="login-err" id="loginErr">Incorrect password.</div>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div class="panel" id="panel">
+
+  <a class="back-link" href="index.html">← Back to Site</a>
+
+  <div class="panel-header">
+    <div><div class="brand">ADMIN PANEL</div><div class="sub">DETAILING WOLVES · MANAGE CONTENT</div></div>
+    <button class="logout-btn" onclick="doLogout()">Logout</button>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('services',this)">Services</button>
+    <button class="tab-btn" onclick="showTab('reviews',this)">Review Services</button>
+    <button class="tab-btn" onclick="showTab('testimonials',this)">Testimonials</button>
+    <button class="tab-btn" onclick="showTab('gallery',this)">Gallery</button>
+  </div>
+
+  <!-- ── TAB: SERVICES ── -->
+  <div id="tab-services">
+    <div class="admin-card">
+      <div class="sec-label">Services List</div>
+      <p class="hint">Edit your services below. The icon, name, and description will display on the main site exactly as entered.</p>
+      <div class="svc-list" id="svcList"></div>
+      <button class="add-row-btn" onclick="addSvcRow()">+ Add Service</button>
+      <button class="save-btn" onclick="saveServices(this)">Save Services</button>
+    </div>
+  </div>
+
+  <!-- ── TAB: REVIEW SERVICES ── -->
+  <div id="tab-reviews" style="display:none">
+    <div class="admin-card">
+      <div class="sec-label">Review Service Options</div>
+      <p class="hint">These are the options customers pick when writing a review. The Key (left) links to the review bank — keep it lowercase with underscores. The Name (right) is what customers see.</p>
+      <div class="rs-list" id="rsList"></div>
+      <button class="add-row-btn" onclick="addRsRow()">+ Add Option</button>
+      <button class="save-btn" onclick="saveReviewServices(this)">Save Options</button>
+    </div>
+  </div>
+
+  <!-- ── TAB: TESTIMONIALS ── -->
+  <div id="tab-testimonials" style="display:none">
+    <div class="admin-card">
+      <div class="sec-label">Client Testimonials</div>
+      <p class="hint">Add real Google reviews from your customers. These will display as a scrolling testimonials section on the main site.</p>
+      <div class="testi-list" id="testiList"></div>
+      <button class="add-row-btn" onclick="addTestiRow()">+ Add Testimonial</button>
+      <button class="save-btn" onclick="saveTestimonials(this)">Save Testimonials</button>
+    </div>
+  </div>
+
+
+  <!-- ── TAB: GALLERY ── -->
+  <div id="tab-gallery" style="display:none">
+    <div class="admin-card">
+      <div class="sec-label">Portfolio / Gallery (up to 10 images)</div>
+      <p class="hint">Upload up to 10 photos. Click any slot to upload. Edit the label below each image. Only slots with photos will show on the site.</p>
+      <div class="gallery-admin" id="galleryGrid"></div>
+      <button class="save-btn" onclick="saveGallery(this)">Save Gallery</button>
+    </div>
+  </div>
+
+</div><!-- /panel -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PASS = 'wolves2025';
+
+/* ══ GALLERY STATE ══ */
+let galleryItems = Array(10).fill(null).map((_,i) => ({src: null, label: '', index: i}));
+
+/* ══ AUTH ══ */
+function doLogin(){
+  if(document.getElementById('pwInput').value === PASS){
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('panel').style.display = 'block';
+    loadAll();
+  } else {
+    document.getElementById('loginErr').style.display = 'block';
+  }
+}
+function doLogout(){
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('panel').style.display = 'none';
+  document.getElementById('pwInput').value = '';
+}
+
+/* ══ TABS ══ */
+function showTab(name, btn){
+  ['services','reviews','testimonials','gallery'].forEach(t => document.getElementById('tab-'+t).style.display = 'none');
+  document.getElementById('tab-'+name).style.display = 'block';
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ══ LOAD ALL ══ */
+function loadAll(){
+  // Gallery
+  const g = localStorage.getItem('dw_gallery_v2');
+  if(g){ try{ const arr = JSON.parse(g); arr.forEach((item,i)=>{ if(item && i<10) galleryItems[i] = {src:item.src||null, label:item.label||'', index:i}; }); }catch(e){} }
+  renderGalleryGrid();
+  // Services
+  const sv = localStorage.getItem('dw_services');
+  renderSvcList(sv ? JSON.parse(sv) : defaultServices());
+  // Review services
+  const rs = localStorage.getItem('dw_review_services');
+  renderRsList(rs ? JSON.parse(rs) : defaultReviewServices());
+  // Testimonials
+  const ts = localStorage.getItem('dw_testimonials');
+  renderTestiList(ts ? JSON.parse(ts) : defaultTestimonials());
+}
+
+/* ══ IMAGE UPLOAD — FIXED ══ */
+function handleUpload(input, previewId, storeKey){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    window['_'+storeKey] = e.target.result;
+    const wrapId = previewId.replace('Preview','PreviewWrap');
+    showPreview(previewId, wrapId, e.target.result);
+    showToast('Image loaded — click Save to apply!');
+  };
+  reader.readAsDataURL(file);
+}
+
+function showPreview(imgId, wrapId, src){
+  const img = document.getElementById(imgId);
+  const wrap = document.getElementById(wrapId);
+  if(img){ img.src = src; }
+  if(wrap){ wrap.style.display = 'block'; }
+}
+
+function saveSingle(storeKey, lsKey, btn, label){
+  const data = window['_'+storeKey];
+  if(!data){ showToast('Please upload an image first'); return; }
+  localStorage.setItem(lsKey, data);
+  btn.textContent = '✓ '+label+' Saved!';
+  btn.classList.add('success');
+  setTimeout(()=>{ btn.textContent = 'Save '+label; btn.classList.remove('success'); }, 2500);
+  showToast(label+' saved! Refresh the main site.');
+}
+
+/* ══ GALLERY ══ */
+function renderGalleryGrid(){
+  const grid = document.getElementById('galleryGrid');
+  grid.innerHTML = '';
+  galleryItems.forEach((item, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'g-slot';
+    slot.id = 'gslot-'+i;
+    if(item && item.src){
+      slot.innerHTML = `
+        <img src="${item.src}" alt="Gallery ${i+1}"/>
+        <input type="file" accept="image/*" onchange="handleGalleryUpload(this,${i})"/>
+        <div class="g-overlay">
+          <span class="g-num">${i+1}</span>
+          <input class="label-inp" value="${item.label||''}" placeholder="Caption…" onchange="galleryItems[${i}].label=this.value" onclick="event.stopPropagation()"/>
+        </div>
+        <button class="g-del" onclick="removeGallerySlot(${i});event.stopPropagation()">✕</button>`;
+    } else {
+      slot.innerHTML = `
+        <input type="file" accept="image/*" onchange="handleGalleryUpload(this,${i})"/>
+        <div class="g-empty">📷</div>
+        <span style="font-size:9px;color:var(--grey);letter-spacing:1px;z-index:1">Slot ${i+1}</span>`;
+    }
+    grid.appendChild(slot);
+  });
+}
+
+function handleGalleryUpload(input, index){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    galleryItems[index] = { src: e.target.result, label: galleryItems[index]?.label || '', index };
+    renderGalleryGrid();
+    showToast(`Slot ${index+1} loaded — click Save Gallery`);
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeGallerySlot(index){
+  galleryItems[index] = { src: null, label: '', index };
+  renderGalleryGrid();
+}
+
+function saveGallery(btn){
+  const toSave = galleryItems.filter(i => i && i.src);
+  if(!toSave.length){ showToast('Upload at least one image'); return; }
+  localStorage.setItem('dw_gallery_v2', JSON.stringify(galleryItems));
+  btn.textContent = '✓ Gallery Saved!'; btn.classList.add('success');
+  setTimeout(()=>{ btn.textContent = 'Save Gallery'; btn.classList.remove('success'); }, 2500);
+  showToast('Gallery saved! Refresh the main site to see changes.');
+}
+
+/* ══ SERVICES ══ */
+function defaultServices(){
+  return [
+    {icon:'✨', name:'Exterior Detailing', desc:'Full wash, clay bar, paint decontamination & wax/sealant protection using Schumak products.'},
+    {icon:'🛋️', name:'Interior Detailing', desc:'Deep vacuum, steam clean, leather treatment & odour elimination.'},
+    {icon:'🪩', name:'Paint Correction', desc:'Remove swirl marks, scratches & haze for showroom-level gloss.'},
+    {icon:'🛡️', name:'Ceramic Coating', desc:'Nano-ceramic shield for long-lasting hydrophobic protection.'},
+    {icon:'🔒', name:'PPF Wrapping', desc:'Paint Protection Film against chips, scratches & UV damage.'},
+    {icon:'💧', name:'Engine Bay Clean', desc:'Safe degreasing for a factory-fresh engine bay look.'}
+  ];
+}
+
+function renderSvcList(services){
+  document.getElementById('svcList').innerHTML = services.map((s,i) => `
+    <div class="svc-row" id="svcrow-${i}">
+      <input class="svc-icon-inp" value="${s.icon||'🔧'}" maxlength="2" title="Emoji icon"/>
+      <div class="svc-text">
+        <input class="svc-name-inp" value="${s.name}" placeholder="Service name"/>
+        <textarea class="svc-desc-inp" rows="2" placeholder="Description">${s.desc}</textarea>
+      </div>
+      <button class="del-btn" onclick="removeSvcRow(${i})">✕</button>
+    </div>`).join('');
+}
+
+function addSvcRow(){
+  const list = document.getElementById('svcList');
+  const i = list.children.length;
+  const div = document.createElement('div');
+  div.className = 'svc-row'; div.id = 'svcrow-'+i;
+  div.innerHTML = `<input class="svc-icon-inp" value="🔧" maxlength="2"/>
+    <div class="svc-text">
+      <input class="svc-name-inp" value="" placeholder="Service name"/>
+      <textarea class="svc-desc-inp" rows="2" placeholder="Description"></textarea>
+    </div>
+    <button class="del-btn" onclick="this.closest('.svc-row').remove()">✕</button>`;
+  list.appendChild(div);
+}
+
+function removeSvcRow(i){ document.getElementById('svcrow-'+i)?.remove(); }
+
+function saveServices(btn){
+  const rows = document.querySelectorAll('.svc-row');
+  const services = [];
+  rows.forEach(row => {
+    const icon = row.querySelector('.svc-icon-inp').value.trim();
+    const name = row.querySelector('.svc-name-inp').value.trim();
+    const desc = row.querySelector('.svc-desc-inp').value.trim();
+    if(name) services.push({icon, name, desc});
+  });
+  localStorage.setItem('dw_services', JSON.stringify(services));
+  btn.textContent = '✓ Services Saved!'; btn.classList.add('success');
+  setTimeout(()=>{ btn.textContent = 'Save Services'; btn.classList.remove('success'); }, 2500);
+  showToast('Services saved! Refresh the main site.');
+}
+
+/* ══ REVIEW SERVICES ══ */
+function defaultReviewServices(){
+  return [
+    {key:'exterior_wash', name:'Exterior Wash'},
+    {key:'interior_detail', name:'Interior Detailing'},
+    {key:'paint_correction', name:'Paint Correction'},
+    {key:'ceramic_coating', name:'Ceramic Coating'},
+    {key:'ppf', name:'PPF Wrapping'},
+    {key:'engine_bay', name:'Engine Bay Cleaning'},
+    {key:'full_package', name:'Full Detailing Package'},
+    {key:'other', name:'Other'}
+  ];
+}
+
+function renderRsList(services){
+  document.getElementById('rsList').innerHTML = services.map((s,i) => `
+    <div class="rs-row" id="rsrow-${i}">
+      <input class="rs-key-inp" value="${s.key}" placeholder="service_key"/>
+      <input class="rs-name-inp" value="${s.name}" placeholder="Display name"/>
+      <button class="del-btn" onclick="this.closest('.rs-row').remove()">✕</button>
+    </div>`).join('');
+}
+
+function addRsRow(){
+  const list = document.getElementById('rsList');
+  const i = list.children.length;
+  const div = document.createElement('div');
+  div.className = 'rs-row'; div.id = 'rsrow-'+i;
+  div.innerHTML = `<input class="rs-key-inp" value="" placeholder="service_key"/>
+    <input class="rs-name-inp" value="" placeholder="Display name"/>
+    <button class="del-btn" onclick="this.closest('.rs-row').remove()">✕</button>`;
+  list.appendChild(div);
+}
+
+function saveReviewServices(btn){
+  const rows = document.querySelectorAll('.rs-row');
+  const services = [];
+  rows.forEach(row => {
+    const key = row.querySelector('.rs-key-inp').value.trim().toLowerCase().replace(/\s+/g,'_');
+    const name = row.querySelector('.rs-name-inp').value.trim();
+    if(key && name) services.push({key, name});
+  });
+  localStorage.setItem('dw_review_services', JSON.stringify(services));
+  btn.textContent = '✓ Saved!'; btn.classList.add('success');
+  setTimeout(()=>{ btn.textContent = 'Save Options'; btn.classList.remove('success'); }, 2500);
+  showToast('Review service options saved!');
+}
+
+/* ══ TESTIMONIALS ══ */
+function defaultTestimonials(){
+  return [
+    {name:'Rahul M.', rating:5, text:'Got my Thar ceramic coated here. The finish is absolutely flawless — mirror-perfect. The hexagon lighting studio really shows the quality of their work. Best detailing studio in Visakhapatnam easily!'},
+    {name:'Priya S.', rating:5, text:'Interior detailing was phenomenal. Every corner spotless, leather conditioned beautifully, and the car smelled amazing. The team really knows their craft. Will keep coming back!'},
+    {name:'Kiran V.', rating:4, text:'Paint correction on my black sedan was outstanding. Almost all swirl marks gone and the paint depth is now incredible. Professional team and great use of Schumak products.'},
+    {name:'Arun K.', rating:5, text:'Brought my BMW for a full package and the results blew me away. Every service was top-notch. The studio setup with the hexagon lights is impressive too. Highly recommend to every car enthusiast!'},
+    {name:'Deepika R.', rating:5, text:'The PPF installation was flawless — not a single bubble or misaligned edge. The team took their time and it shows. My car is protected and still looks factory fresh. Worth every rupee!'}
+  ];
+}
+
+function renderTestiList(testimonials){
+  document.getElementById('testiList').innerHTML = testimonials.map((t,i) => `
+    <div class="testi-row" id="trow-${i}">
+      <div class="t-left">
+        <input class="t-name" value="${t.name||''}" placeholder="Customer name"/>
+        <div class="t-stars" data-idx="${i}">${[1,2,3,4,5].map(n=>`<span class="t-star${n<=(t.rating||5)?' on':''}" onclick="setTStar(${i},${n})">⭐</span>`).join('')}</div>
+      </div>
+      <textarea class="t-text" rows="3" placeholder="Review text…">${t.text||''}</textarea>
+      <button class="del-btn" onclick="document.getElementById('trow-${i}').remove()">✕</button>
+    </div>`).join('');
+}
+
+function setTStar(rowIdx, val){
+  const row = document.getElementById('trow-'+rowIdx);
+  row.querySelectorAll('.t-star').forEach((s,i) => s.classList.toggle('on', i < val));
+  row.dataset.rating = val;
+}
+
+function addTestiRow(){
+  const list = document.getElementById('testiList');
+  const i = Date.now();
+  const div = document.createElement('div');
+  div.className = 'testi-row'; div.id = 'trow-'+i;
+  div.innerHTML = `<div class="t-left">
+      <input class="t-name" value="" placeholder="Customer name"/>
+      <div class="t-stars">${[1,2,3,4,5].map(n=>`<span class="t-star${n<=5?' on':''}" onclick="setTStarEl(this,${n})">⭐</span>`).join('')}</div>
+    </div>
+    <textarea class="t-text" rows="3" placeholder="Paste review text here…"></textarea>
+    <button class="del-btn" onclick="this.closest('.testi-row').remove()">✕</button>`;
+  list.appendChild(div);
+}
+
+function setTStarEl(el, val){
+  el.closest('.t-stars').querySelectorAll('.t-star').forEach((s,i) => s.classList.toggle('on', i < val));
+}
+
+function saveTestimonials(btn){
+  const rows = document.querySelectorAll('.testi-row');
+  const testimonials = [];
+  rows.forEach(row => {
+    const name = row.querySelector('.t-name').value.trim();
+    const text = row.querySelector('.t-text').value.trim();
+    const stars = row.querySelectorAll('.t-star.on').length;
+    if(name && text) testimonials.push({name, rating: stars||5, text});
+  });
+  localStorage.setItem('dw_testimonials', JSON.stringify(testimonials));
+  btn.textContent = '✓ Testimonials Saved!'; btn.classList.add('success');
+  setTimeout(()=>{ btn.textContent = 'Save Testimonials'; btn.classList.remove('success'); }, 2500);
+  showToast('Testimonials saved! Refresh the main site.');
+}
+
+/* ══ TOAST ══ */
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
